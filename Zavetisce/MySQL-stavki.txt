@@ -1,0 +1,76 @@
+DELIMITER //
+CREATE OR REPLACE FUNCTION prijava(username VARCHAR(100), pass VARCHAR(100))
+RETURNS INT
+BEGIN
+IF EXISTS(SELECT id FROM uporabniki WHERE uporabnisko_ime = username AND geslo = pass)
+THEN
+RETURN 1;
+ELSE
+RETURN 0;
+END IF;
+END
+// DELIMITER ;
+-----------------------------------------------------------
+DELIMITER //
+CREATE OR REPLACE FUNCTION menjava_gesla(st_geslo VARCHAR(100), nv_geslo VARCHAR(100))
+RETURNS INT
+BEGIN  
+  IF EXISTS (SELECT id FROM uporabniki WHERE geslo = st_geslo) 
+  THEN   
+    UPDATE uporabniki SET geslo = nv_geslo WHERE geslo = st_geslo ;
+    RETURN 1 ;   
+  ELSE
+   RETURN 0 ;
+  END IF ;
+END
+// DELIMITER ;
+-----------------------------------------------------------
+DELIMITER //
+CREATE PROCEDURE `vse_pasme` ()  BEGIN 
+	SELECT ime FROM pasme ;
+END 
+// DELIMITER ;
+-----------------------------------------------------------
+DELIMITER //
+CREATE OR REPLACE FUNCTION dodaj_psa(pasma VARCHAR(100), name VARCHAR(100), datum TIMESTAMP, nickname VARCHAR(100), price FLOAT )
+RETURNS INT
+BEGIN    
+    INSERT INTO psi(id, pasma_id, ime, roj_datum, vzdevek, cena) VALUES (NULL, (SELECT id FROM pasme WHERE ime = pasma), name, datum, nickname, price) ;
+    RETURN 1 ;   
+END
+// DELIMITER ;
+-----------------------------------------------------------
+DELIMITER //
+CREATE OR REPLACE FUNCTION dodaj_pasmo(name VARCHAR(100), doba VARCHAR(100), velikostM VARCHAR(100), velikostZ VARCHAR(100) )
+RETURNS INT
+BEGIN    
+    INSERT INTO pasme(id, ime, ziv_doba, velikost_samca, velikost_samice) VALUES (NULL, name, doba, velikostM, velikostZ) ;
+    RETURN 1 ;   
+END
+// DELIMITER ;
+-----------------------------------------------------------
+DELIMITER //
+CREATE PROCEDURE `iskanje_psa` (IN name CHAR(100))  BEGIN 
+	SELECT p.ime, pa.ime, p.roj_datum, p.vzdevek, p.cena FROM psi p INNER JOIN pasme pa ON p.pasma_id = pa.id WHERE p.ime LIKE CONCAT('%', name , '%') ;
+END 
+// DELIMITER ;
+-----------------------------------------------------------
+DELIMITER //
+CREATE OR REPLACE FUNCTION nakup_psa(id_psa INT, kupec_name VARCHAR(100), kupec_surname VARCHAR(100), koncna_cena FLOAT)
+RETURNS INT
+BEGIN 
+	UPDATE psi SET kupec_ime=kupec_name, kupec_priimek=kupec_surname, cena=koncna_cena WHERE id = id_psa ;
+	DELETE FROM psi WHERE id = id_psa ;    
+    RETURN 1 ;   
+END 
+// DELIMITER ;
+-----------------------------------------------------------
+DELIMITER //
+CREATE TRIGGER prodan BEFORE DELETE ON psi
+FOR EACH ROW
+BEGIN 
+	INSERT INTO prodani_psi VALUES (NULL, OLD.ime, OLD.kupec_ime,OLD.kupec_priimek,OLD.cena) ;      
+END 
+// DELIMITER ;
+-----------------------------------------------------------
+
